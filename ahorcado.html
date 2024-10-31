@@ -21,15 +21,161 @@
             .hidden {
                 display: none;
             }
+            /* Estilo para el SVG */
+            svg {
+                position: absolute;
+                top: 50;
+                botton: 0;
+                right: 0;
+                left: 0;
+                margin: auto;
+            }
+            #new-game {
+                display: none; /* El botón no se muestra inicialmente */
+            }
         </style>
     </head>
 
     <body>
+        <!-- Cuadro de texto para introducir la palabra a ocultar -->
         <input type="text" id="palabra" placeholder="Introduce una palabra" />
+        <!-- Botón para iniciar el Juego -->
         <button id="insert-word">InsertarPalabra</button>
+        <!-- Contenedor de la palabra oculta -->
         <div id="asterisks-container"></div>
+        <!-- Contenedor con los botones de todas las letras a elegir -->
         <div id="button-container"></div>
+        <button id="new-game" onclick="reiniciarPagina()">Nuevo Juego</button>
+        <!-- Dibujo del ahorcado -->
+        <svg
+            id="svg_imagen"
+            xmlns="http://www.w3.org/2000/svg"
+            xml:space="preserve"
+            width="500"
+            height="500"
+        >
+            <circle
+                id="cabeza"
+                cx="105.08"
+                cy="120.717"
+                r="38.085"
+                fill="#fff"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.705"
+                style="display: none"
+            />
+            <path
+                id="poste"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="3"
+                d="m405.399 318.774.111-173.949"
+                style="display: none"
+            />
+            <path
+                id="cuerpo"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="2.229"
+                d="M106.088 162.519l-.112 95.376"
+                style="display: none"
+            />
+            <path
+                id="cuerda"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.879"
+                d="m105.262 14.575-.113 67.462"
+                style="display: none"
+            />
+            <path
+                id="poste-horizontal"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="3"
+                d="m105.783 16.749 173.948.111"
+                style="display: none"
+            />
+            <path
+                id="poste-inclinado"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="3"
+                d="M284.028 17.612l123 123"
+                style="display: none"
+            />
+            <path
+                id="brazo-derecha"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.013"
+                d="m109.703 176.4 41.657 41.385"
+                style="display: none"
+            />
+            <path
+                id="brazo-izquierda"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.013"
+                d="M102.518 175.647 60.86 217.032"
+                style="display: none"
+            />
+            <path
+                id="tarima"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="2.229"
+                d="m356.904 325.206 95.376.112"
+                style="display: none"
+            />
+            <path
+                id="pie-iz-tarima"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.524"
+                d="m355.268 330.125-29.03 83.445"
+                style="display: none"
+            />
+            <path
+                id="pie-de-tarima"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.524"
+                d="m455.156 328.378 29.03 83.444"
+                style="display: none"
+            />
+            <path
+                id="pierna-izquierda"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.524"
+                d="M104.811 258.834l-29.029 83.444"
+                style="display: none"
+            />
+            <path
+                id="pierna-derecha"
+                fill="none"
+                stroke="#000"
+                stroke-miterlimit="10"
+                stroke-width="1.524"
+                d="M107.349 259.122l29.029 83.445"
+                style="display: none"
+            />
+        </svg>
         <script>
+            // Array con todoas las letras
             const values = [
                 "Q",
                 "W",
@@ -59,17 +205,60 @@
                 "N",
                 "M",
             ];
+
+            // Array con todas las partes del dibujo
+            const DibujoAhorcado = [
+                "easter-egg",
+                "pie-iz-tarima",
+                "pie-de-tarima",
+                "tarima",
+                "poste",
+                "poste-inclinado",
+                "poste-horizontal",
+                "cuerda",
+                "cabeza",
+                "cuerpo",
+                "brazo-izquierda",
+                "brazo-derecha",
+                "pierna-izquierda",
+                "pierna-derecha",
+            ];
+            // Array de la palabra
             let valuesArray = [];
+            // Array de la palabra Oculta /Desoculta
             let asterisksArray = [];
+            // Número de fallos cometidos
+            let numfallos = 0;
+            // Número total de fallos que se pueden cometer
+            const totalFallosFail = 13;
+            // Palabra que ocultamos
             const palabraText = document.getElementById("palabra");
+            // Botón para insertar la palabra
             const insertButton = document.getElementById("insert-word");
+            // Contenedor para el svg
+            const svgContainer = document.getElementById("svg_imagen");
+            // Contenedor del Array de la palabra Oculta /Desoculta
             const asterisksContainer = document.getElementById(
                 "asterisks-container",
             );
+            // Contenedor para todos los botones
             const buttonContainer = document.getElementById("button-container");
+            // Actualizar el contenedor del Array de la palabra Oculta /Desoculta
             function updateAsterisks() {
                 asterisksContainer.innerText = asterisksArray.join("");
             }
+            // Funcion para saber cuando ha perdido
+            function HaPerdido() {
+                if (numfallos == totalFallosFail) {
+                    alert("Ha perdido");
+                    svgContainer.classList.add("hidden");
+                    buttonContainer.classList.add("hidden");
+                    asterisksContainer.classList.add("hidden");
+                    const buttonNG = document.getElementById("new-game");
+                    buttonNG.style.display = "inline";
+                }
+            }
+            // Función que comprueba si la letra seleccionada es fallo o es correcta
             function ComprobarLetra(value) {
                 const button = document.getElementById(value);
                 valor = 0;
@@ -82,14 +271,32 @@
                 if (valor == 0) {
                     button.classList.remove("black-button");
                     button.classList.add("red-button");
+                    numfallos++;
+                    const parte = document.getElementById(
+                        DibujoAhorcado[numfallos],
+                    );
+                    parte.style.display = "inline"; // Cambia display: none a inline para hacerlo visible
+                    parte.style.visibility = "visible"; // Asegura que visibility también esté en visible
+                    //console.log(numfallos);
                 }
                 valor = 0;
                 updateAsterisks();
+                HaPerdido();
             }
+            // Evento para el Botón de Nuevo Juego
+            function reiniciarPagina() {
+                location.reload(); // Recarga la página actual
+            }
+            // evento Para insertar la palabra que ocultaremos
             insertButton.addEventListener("click", () => {
-                const palabravalue = palabraText.value.trim().toUpperCase();
+                //Utilizamos la palabra sin caracteres especiales y números sin espacios y lo pasamos a mayusculas
+                const palabravalue = palabraText.value
+                    .replace(/[^A-Za-z]/g, "")
+                    .trim()
+                    .toUpperCase();
                 console.warn(`${palabravalue} `);
                 if (palabravalue) {
+                    // si no está vacia
                     valuesArray = palabravalue.split("");
 
                     console.log("Valor agregado al array:", valuesArray);
@@ -108,9 +315,9 @@
                     for (let i = 0; i < valuesArray.length; i++) {
                         asterisksArray.push("*");
                     }
-                    console.log(valuesArray);
-                    console.log(valuesArray.length);
-                    console.log(asterisksArray);
+                    // console.log(valuesArray);
+                    // console.log(valuesArray.length);
+                    // console.log(asterisksArray);
                     updateAsterisks();
                 } else {
                     alert("Introduce una palabra válida");
