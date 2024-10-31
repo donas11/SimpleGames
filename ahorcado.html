@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Ahorcado</title>
+        <style>
+            /* Estilo para los botones */
+            .black-button {
+                background-color: black;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                margin: 5px;
+                cursor: pointer;
+            }
+            .red-button {
+                background-color: red;
+                color: white;
+            }
+            .hidden {
+                display: none;
+            }
+        </style>
+    </head>
+
+    <body>
+        <input type="text" id="palabra" placeholder="Introduce una palabra" />
+        <button id="insert-word">InsertarPalabra</button>
+        <div id="asterisks-container"></div>
+        <div id="button-container"></div>
+        <script>
+            const values = [
+                "Q",
+                "W",
+                "E",
+                "R",
+                "T",
+                "Y",
+                "U",
+                "I",
+                "O",
+                "P",
+                "A",
+                "S",
+                "D",
+                "F",
+                "G",
+                "H",
+                "J",
+                "K",
+                "L",
+                "Ñ",
+                "Z",
+                "X",
+                "C",
+                "V",
+                "B",
+                "N",
+                "M",
+            ];
+            let valuesArray = [];
+            let asterisksArray = [];
+            const palabraText = document.getElementById("palabra");
+            const insertButton = document.getElementById("insert-word");
+            const asterisksContainer = document.getElementById(
+                "asterisks-container",
+            );
+            const buttonContainer = document.getElementById("button-container");
+            function updateAsterisks() {
+                asterisksContainer.innerText = asterisksArray.join("");
+            }
+            function ComprobarLetra(value) {
+                const button = document.getElementById(value);
+                valor = 0;
+                valuesArray.forEach((element, index) => {
+                    if (element === value) {
+                        asterisksArray[index] = value;
+                        valor = 1;
+                    }
+                });
+                if (valor == 0) {
+                    button.classList.remove("black-button");
+                    button.classList.add("red-button");
+                }
+                valor = 0;
+                updateAsterisks();
+            }
+            insertButton.addEventListener("click", () => {
+                const palabravalue = palabraText.value.trim().toUpperCase();
+                console.warn(`${palabravalue} `);
+                if (palabravalue) {
+                    valuesArray = palabravalue.split("");
+
+                    console.log("Valor agregado al array:", valuesArray);
+                    palabraText.classList.add("hidden");
+                    insertButton.classList.add("hidden");
+                    values.forEach((value) => {
+                        const button = document.createElement("button");
+                        button.innerText = value;
+                        button.value = value;
+                        button.id = value;
+                        button.addEventListener("click", () =>
+                            ComprobarLetra(value),
+                        );
+                        buttonContainer.appendChild(button);
+                    });
+                    for (let i = 0; i < valuesArray.length; i++) {
+                        asterisksArray.push("*");
+                    }
+                    console.log(valuesArray);
+                    console.log(valuesArray.length);
+                    console.log(asterisksArray);
+                    updateAsterisks();
+                } else {
+                    alert("Introduce una palabra válida");
+                }
+            });
+        </script>
+    </body>
+</html>
