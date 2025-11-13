@@ -258,6 +258,23 @@
                     buttonNG.style.display = "inline";
                 }
             }
+            // Funcion para saber cuando ha ganado
+            function HaGanado() {
+                let winner= true;
+                asterisksArray.forEach((element, index) => {
+                    if (element == "*") {
+                        winner = false;
+                    }
+                });
+                if (winner == true) {
+                    alert("Ha Ganado");
+                    svgContainer.classList.add("hidden");
+                    buttonContainer.classList.add("hidden");
+                    asterisksContainer.classList.add("hidden");
+                    const buttonNG = document.getElementById("new-game");
+                    buttonNG.style.display = "inline";
+                }
+            }
             // Función que comprueba si la letra seleccionada es fallo o es correcta
             function ComprobarLetra(value) {
                 const button = document.getElementById(value);
@@ -281,6 +298,7 @@
                 }
                 valor = 0;
                 updateAsterisks();
+                HaGanado();
                 HaPerdido();
             }
             // Evento para el Botón de Nuevo Juego
