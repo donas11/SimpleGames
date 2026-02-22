@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Wake up, Neo...</title>
+
+        <!-- Google Fonts: OCR-A -->
+        <link
+            href="https://fonts.googleapis.com/css2?family=OCR-A&display=swap"
+            rel="stylesheet"
+        />
+
+        <style>
+            * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                }
+
+                body {
+                  background: #000;
+                  color: #00ff41;
+                  height: 100vh;
+                  width: 100vw;
+                  overflow: hidden;
+                  tabindex="0";
+                  font-family:
+                    "OCR-A", "OCR A", "Courier 10 Pitch",
+                    "Courier New", Consolas, monospace;
+                  font-size: 1.6rem;
+                  line-height: 1.3;
+                  text-shadow: 0 0 5px #00ff41;
+                  cursor: pointer;
+                }
+
+                #screen {
+                  position: absolute;
+                  top: 5vh;
+                  left: 3vw;
+                  letter-spacing: 0.015em;
+                  max-width: 40vw;
+                  padding: 1rem;
+                }
+
+                #start-btn {
+                  position: absolute;
+                  top: 50%;
+                  left: 50%;
+                  transform: translate(-50%, -50%);
+                  color: #00ff41;
+                  font-family: inherit;
+                  font-size: 1.2rem;
+                  background: transparent;
+                  border: 2px solid #00ff41;
+                  padding: 1rem 2rem;
+                  cursor: pointer;
+                  text-shadow: 0 0 5px #00ff41;
+                }
+
+                #start-btn:hover {
+                  background: rgba(0, 255, 65, 0.1);
+                }
+
+                body::before {
+                  content: '';
+                  position: fixed;
+                  top: 0;
+                  left: 0;
+                  width: 100%;
+                  height: 2px;
+                  background: rgba(0, 255, 65, 0.1);
+                  animation: scanline 4s linear infinite;
+                }
+
+                @keyframes scanline {
+                  0% { transform: translateY(-100%); }
+                  100% { transform: translateY(100vh); }
+                }
+        </style>
+    </head>
+    <body>
+        <button id="start-btn">CLIC para activar sonido y empezar</button>
+        <div id="screen">
+            <span id="text"></span>
+        </div>
+
+        <canvas
+            id="matrix-rain"
+            style="
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                z-index: 10;
+                display: none;
+            "
+        ></canvas>
+        <!-- Script sin cambios -->
+        <script>
+            const messages = [
+                "Wake up, Neo...",
+                "The Matrix has you...",
+                "Follow the white rabbit.",
+                "Knock, knock, Neo.",
+            ];
+
+            let currentMessageIndex = 0;
+            let isTyping = false;
+            let audioCtx = null;
+            const speed = 100;
+            const pauseBetweenMessages = 5000;
+            const canvasRain = document.getElementById("matrix-rain");
+            const ctxRain = canvasRain.getContext("2d");
+            let rainDrops = [];
+            let matrixRainActive = false;
+
+            const textElement = document.getElementById("text");
+            const startBtn = document.getElementById("start-btn");
+            const screen = document.getElementById("screen");
+
+            // SONIDO AVANZADO Matrix (restaurado)
+            function playMatrixSound() {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                // ONDA CUSTOM: Matrix distorsionado
+                const wave = new Float32Array(256);
+                for (let i = 0; i < 256; i++) {
+                    const x = (i / 256) * 2 * Math.PI;
+                    wave[i] = Math.sin(x) * (0.8 + 0.2 * Math.sin(x * 3)); // Armónicos robóticos
+                }
+                oscillator.setPeriodicWave(
+                    audioCtx.createPeriodicWave(wave, wave),
+                );
+
+                oscillator.frequency.value = 950;
+                gainNode.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.002,
+                    audioCtx.currentTime + 0.045,
+                );
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.045);
+            }
+
+            function startMatrixRain() {
+                canvasRain.width = window.innerWidth;
+                canvasRain.height = window.innerHeight;
+                canvasRain.style.display = "block";
+
+                const fontSize = 14;
+                const cols = Math.floor(canvasRain.width / fontSize);
+                rainDrops = Array(cols).fill(1);
+
+                function draw() {
+                    ctxRain.fillStyle = "rgba(0, 0, 0, 0.05)";
+                    ctxRain.fillRect(0, 0, canvasRain.width, canvasRain.height);
+
+                    ctxRain.fillStyle = "#0f0";
+                    ctxRain.font = `${fontSize}px monospace`;
+
+                    for (let i = 0; i < rainDrops.length; i++) {
+                        const text = "01カタカナABCDEFGHIJKLMNOPQRSTUVWXYZ"[
+                            (Math.random() * 32) | 0
+                        ];
+                        ctxRain.fillText(
+                            text,
+                            i * fontSize,
+                            rainDrops[i] * fontSize,
+                        );
+
+                        if (
+                            rainDrops[i] * fontSize > canvasRain.height &&
+                            Math.random() > 0.975
+                        ) {
+                            rainDrops[i] = 0;
+                        }
+                        rainDrops[i]++;
+                    }
+                }
+
+                setInterval(draw, 35);
+                matrixRainActive = true;
+            }
+
+            async function typeWriter(text) {
+                isTyping = true;
+                textElement.textContent = "";
+
+                currentMessageIndex++; // Incrementa antes
+
+                for (let i = 0; i < text.length; i++) {
+                    textElement.textContent += text.charAt(i);
+                    playMatrixSound();
+                    await new Promise((resolve) => setTimeout(resolve, speed));
+                }
+
+                isTyping = false;
+
+                if (currentMessageIndex === 4) {
+                    // Después "knock, knock"
+                    console.log("Esperando TRINITY...");
+
+                    const trinityCheck = (event) => {
+                        const key = event.key.toUpperCase();
+                        let trinity = "";
+
+                        document.addEventListener("keydown", handler);
+
+                        function handler(e) {
+                            trinity += e.key.toUpperCase();
+                            if (trinity.includes("TRINITY")) {
+                                document.removeEventListener(
+                                    "keydown",
+                                    handler,
+                                );
+                                document.removeEventListener(
+                                    "keydown",
+                                    trinityCheck,
+                                );
+                                startMatrixRain();
+                            }
+                        }
+                    };
+
+                    document.addEventListener("keydown", trinityCheck);
+                }
+
+                // Pausa automática entre 1 y 2
+                if (currentMessageIndex === 1) {
+                    await new Promise((resolve) =>
+                        setTimeout(resolve, pauseBetweenMessages),
+                    );
+                    typeWriter(messages[1]);
+                }
+            }
+
+            // CLICK INICIAL
+            startBtn.addEventListener("click", async () => {
+                audioCtx = new (
+                    window.AudioContext || window.webkitAudioContext
+                )();
+                await audioCtx.resume();
+
+                startBtn.style.display = "none";
+                screen.style.display = "block";
+                document.body.focus();
+
+                console.log("Matrix ON. CTRL+X → ESC");
+                typeWriter(messages[0]); // SONIDO DESDE WAKE UP
+            });
+
+            // TECLAS CORREGIDAS (globales)
+            document.addEventListener("keydown", (event) => {
+                // Solo después de start
+                if (screen.style.display === "none") return;
+
+                console.log(
+                    `Tecla: ${event.key} CTRL:${event.ctrlKey} Index:${currentMessageIndex}`,
+                );
+
+                // CTRL+X para mensaje 3
+                if (
+                    event.ctrlKey &&
+                    event.key.toLowerCase() === "x" &&
+                    currentMessageIndex === 2 &&
+                    !isTyping
+                ) {
+                    event.preventDefault();
+                    typeWriter(messages[2]);
+                    return;
+                }
+
+                // ESC para mensaje 4
+                if (
+                    event.key === "Escape" &&
+                    currentMessageIndex === 3 &&
+                    !isTyping
+                ) {
+                    event.preventDefault();
+                    typeWriter(messages[3]);
+                    return;
+                }
+            });
+        </script>
+    </body>
+</html>
